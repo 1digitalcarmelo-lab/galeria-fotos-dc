@@ -271,6 +271,22 @@ input,select{font:inherit;color:inherit}
 .ohead b{font-size:17px;display:block}.ohead small{color:var(--pmuted);font-size:14px;display:block}
 .oright{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.oright .badge{margin-top:0}
 .ototal{font-weight:800;font-size:18px;white-space:nowrap}
+.secbar{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0;display:flex;gap:8px;flex-wrap:wrap}
+.secchip{background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-weight:700;font-size:14px}
+.secchip.full{background:var(--accent);color:#fff;border-color:var(--accent)}
+.ph .tags{position:absolute;left:8px;top:8px;right:8px;display:flex;gap:4px;flex-wrap:wrap;pointer-events:none}
+.ph .tags i{font-style:normal;background:var(--accent);color:#fff;font-size:11px;font-weight:800;border-radius:6px;padding:2px 6px}
+.secopt{display:flex;align-items:center;gap:12px;width:100%;min-height:58px;border:1.5px solid var(--line);border-radius:12px;padding:0 14px;margin-top:8px;background:#fff;font:inherit;font-weight:700;text-align:left;cursor:pointer}
+.secopt .bx{width:24px;height:24px;border-radius:6px;border:2px solid var(--line);display:grid;place-items:center;color:#fff;font-size:15px;flex:none}
+.secopt.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,#fff)}.secopt.on .bx{background:var(--accent);border-color:var(--accent)}
+.secopt[disabled]{opacity:.45;cursor:default}
+.secopt span{margin-left:auto;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+.secthumb{width:100%;max-height:38vh;object-fit:contain;border-radius:10px;background:#EEF1F5;display:block;margin-top:10px}
+.secrow{display:grid;grid-template-columns:1fr 84px 36px;gap:8px;margin-top:8px;align-items:center}
+.secrow input{min-width:0;min-height:44px;border:1px solid var(--line);border-radius:10px;padding:0 12px;background:var(--bg);font:inherit}
+.seclist{margin-top:14px}.seclist .sl{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:8px}
+.seclist .sl b{display:flex;justify-content:space-between;gap:8px}.seclist .sl small{display:block;color:var(--muted);margin-top:4px;font-size:14px}
+.osec{margin-top:12px}.osec>b{font-size:15px}
 .othumbs{display:flex;gap:8px;overflow-x:auto;padding:12px 0 4px}
 .othumbs figure{flex:0 0 auto;width:84px}
 .othumbs img{width:84px;height:84px;object-fit:cover;border-radius:8px;background:#EEF1F5;display:block}
@@ -462,8 +478,9 @@ input,select{font:inherit;color:inherit}
   </main>
   <main id="vAct" class="wrap hide">
     <div class="ahead"><button class="back" id="aBack">← Todos los álbumes</button><h1 id="aTitle"></h1><div class="meta" id="aMeta"></div><span class="flag hide" id="aFlag">Álbum de archivo: el fotógrafo busca los originales y te los manda en unos días.</span></div>
-    <div class="finder"><label>Cómo pedir</label><p>Mirá las fotos, tocá <b>+</b> en las que querés y abajo armás tu pedido. Cada foto tiene su número para que el fotógrafo sepa cuál es.</p></div>
+    <div class="finder"><label id="aHowL">Cómo pedir</label><p id="aHow">Mirá las fotos, tocá <b>+</b> en las que querés y abajo armás tu pedido. Cada foto tiene su número para que el fotógrafo sepa cuál es.</p></div>
     <div class="count tab-num" id="aCount"></div>
+    <div class="secbar hide" id="secBar"></div>
     <div class="grid" id="grid"></div>
   </main>
   <div class="wrap"><footer class="pfoot" id="pFoot"></footer></div>
@@ -524,6 +541,10 @@ S.schools=[
   {id:nid(),type:'escolar',name:'Colegio Nuestra Señora del Valle',loc:'Paso del Rey',acts:[
     mkAct('Muestra de arte','Nivel inicial','2026','14 de noviembre',14,500,50)]}
 ];
+const PRESETS={xv:{label:'XV o book',secs:[['Gigantografía',3],['Numeración de mesas',2],['Libro de firmas',20]]},boda:{label:'Boda',secs:[['Gigantografía',3],['Cuadro principal',1],['Libro de firmas',20],['Álbum',60]]},comu:{label:'Comunión',secs:[['Cuadro',1],['Estampitas',2]]}};
+const preset=k=>PRESETS[k].secs.map(([name,max])=>({name,max}));
+{const book=mkAct('Book de fotos','','2026','20 de noviembre',24,1300,55);book.secs=preset('xv');
+ S.schools.push({id:nid(),type:'evento',name:'XV de Martina',loc:'Moreno',acts:[book]});}
 const mkCurso=(name,turno,year,teacher,kids,seed)=>({id:nid(),name,turno,year,teacher,kids,seed,cache:null});
 S.schools.forEach(s=>s.cursos=[]);
 S.schools.forEach(s=>{s.published=s.acts.map(a=>a.id);s.pubC=s.cursos.map(c=>c.id);});
@@ -629,6 +650,7 @@ function renderSchool(){
     const bx=r.querySelector('.actbtns'),btn=(t,cls,f)=>{const b=document.createElement('button');b.className=cls;b.type='button';b.textContent=t;b.onclick=f;bx.appendChild(b);};
     if(on){
       if(left<=15)btn('Extender '+EXT_DAYS+' días','btn gold',()=>{a.until=Math.max(a.until,Date.now())+EXT_DAYS*DAY;renderSchool();toast('Listo: queda online hasta el '+fdate(a.until)+'.');});
+      btn(a.secs&&a.secs.length?'Selección · '+a.secs.length+(a.secs.length===1?' sección':' secciones'):'Pedir selección de fotos','btn soft',()=>openSecs(a));
       btn('Descargar archivo','btn soft',()=>exportArchive(s,a));
       btn('Simular vencimiento (demo)','linkbtn',()=>{a.until=Date.now()-DAY;renderSchool();toast('Demo: el álbum venció y salió de la página. Reactivalo con su archivo.');});
     }else btn('Reactivar con el archivo','btn gold',()=>{reTarget=a.id;$('#reFile').click();});
@@ -645,6 +667,30 @@ function renderSchool(){
     r.querySelector('button').onclick=()=>printModal(s,c);cb.appendChild(r);});
 }
 $('#sBack').onclick=()=>tab('colegios');
+/* selección por secciones: el fotógrafo arma la lista (gigantografía, mesas, libro de firmas…) */
+function openSecs(a){
+  let rows=(a.secs||[]).map(x=>({...x}));
+  const sync=()=>{$('#sheetBox').querySelectorAll('[data-n]').forEach(el=>{rows[+el.dataset.n].name=el.value;});$('#sheetBox').querySelectorAll('[data-q]').forEach(el=>{rows[+el.dataset.q].max=Math.max(1,parseInt(el.value,10)||1);});};
+  const draw=()=>{
+    let h='<h2>Selección de fotos</h2><p class="sub">'+esc(albumName(a))+'. Armá las secciones y hasta cuántas fotos pueden elegir en cada una. Te mandan su lista por WhatsApp.</p>';
+    h+='<div class="flabel" style="margin-top:14px">Empezar con</div><div class="chips">'+Object.entries(PRESETS).map(([k,p])=>'<button type="button" class="chip" data-pre="'+k+'">'+esc(p.label)+'</button>').join('')+'</div>';
+    if(rows.length)h+='<div class="secrow" style="font-size:13px;font-weight:700;margin-top:16px"><span>Sección</span><span>Hasta</span><span></span></div>';
+    rows.forEach((r,i)=>{h+='<div class="secrow"><input data-n="'+i+'" value="'+esc(r.name)+'" placeholder="Ej: Gigantografía" aria-label="Nombre de la sección"><input data-q="'+i+'" type="number" min="1" inputmode="numeric" value="'+r.max+'" aria-label="Hasta cuántas fotos"><button type="button" class="linkbtn" data-del="'+i+'" aria-label="Quitar sección">✕</button></div>';});
+    h+='<button type="button" class="btn soft" id="secAdd" style="margin-top:12px">+ Agregar sección</button>';
+    h+='<p class="note">La misma foto puede ir en varias secciones, y pueden mandarte la selección aunque no completen todo.</p>';
+    h+='<button type="button" class="btn gold" id="secSave" style="width:100%;margin-top:14px">Guardar</button>';
+    if(a.secs&&a.secs.length)h+='<button type="button" class="btn ghost" id="secOff" style="width:100%;margin-top:8px">Quitar la selección de este álbum</button>';
+    h+='<button type="button" class="btn ghost" id="secX" style="width:100%;margin-top:8px">Cancelar</button>';
+    $('#sheetBox').innerHTML=h;sheet.classList.add('show');
+    $('#sheetBox').querySelectorAll('[data-pre]').forEach(b=>b.onclick=()=>{rows=preset(b.dataset.pre);draw();});
+    $('#sheetBox').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{sync();rows.splice(+b.dataset.del,1);draw();});
+    $('#secAdd').onclick=()=>{sync();rows.push({name:'',max:1});draw();const ins=$('#sheetBox').querySelectorAll('[data-n]');ins[ins.length-1].focus();};
+    $('#secSave').onclick=()=>{sync();const ok=rows.filter(r=>r.name.trim()).map(r=>({name:r.name.trim(),max:r.max}));a.secs=ok.length?ok:null;sheet.classList.remove('show');renderSchool();toast(ok.length?'Listo: la familia ya ve las secciones en este álbum.':'Este álbum queda sin selección.');};
+    if($('#secOff'))$('#secOff').onclick=()=>{a.secs=null;sheet.classList.remove('show');renderSchool();toast('Este álbum queda sin selección.');};
+    $('#secX').onclick=()=>sheet.classList.remove('show');
+  };
+  draw();
+}
 let cursoN=0;const CURSOS=[['5.º grado A','Turno tarde','Seño Marcela'],['Sala de 5 Naranja','Turno mañana','Seño Vero'],['1.º grado C','Turno tarde','Seño Andrea']];
 $('#addCurso').onclick=()=>{const d=CURSOS[cursoN%CURSOS.length];cursoN++;S.cur.cursos.push(mkCurso(d[0],d[1],'2026',d[2],NAMES.slice(cursoN%4,cursoN%4+10),1200+cursoN*50));renderSchool();toast('Curso agregado. Tocá Publicar para que aparezca.');};
 $('#sPublish').onclick=()=>{S.cur.published=S.cur.acts.map(a=>a.id);S.cur.pubC=S.cur.cursos.map(c=>c.id);renderSchool();toast('Publicado. La página ya está actualizada.');};
@@ -833,21 +879,40 @@ function openAlbum(items,title,meta,archived,wide){
 function openAct(a){
   ensurePhotos(a);
   const items=a.photos.map(p=>{const code='#'+String(p.id).padStart(3,'0');return{k:a.id+':'+p.id,names:p.names,num:code,w:p.w,h:p.h,prev:p.prev,th:p.th,pay:{type:'foto',act:a,code}};});
+  S.secAct=a.secs&&a.secs.length?a:null;S.ssel=S.secAct?a.secs.map(()=>new Set()):null;
   openAlbum(items,a.title+(a.turno?' · '+a.turno:''),S.pubSchool.name+' · '+a.date,false,false);
 }
-function openCurso(c){openAlbum(cursoItems(S.pubSchool,c),'Recuerdo escolar · '+c.name,S.pubSchool.name+' · '+c.turno+' · '+c.year,false,true);}
+function openCurso(c){S.secAct=null;S.ssel=null;openAlbum(cursoItems(S.pubSchool,c),'Recuerdo escolar · '+c.name,S.pubSchool.name+' · '+c.turno+' · '+c.year,false,true);}
 $('#aBack').onclick=()=>{showPub('#vSchool');renderPubActs();};
 function renderGrid(){
   const q=S.filter.trim().toLowerCase();
   S.visible=S.items.filter(p=>!q||p.names.some(n=>n.toLowerCase().includes(q)));
   $('#aCount').textContent=q?(S.visible.length+(S.wide?' recuerdos':' fotos')+' de "'+S.filter+'"'):(S.items.length+(S.wide?' recuerdos · tocá el de tu hijo para verlo grande':' fotos · tocá una para verla grande'));
+  const SA=S.secAct;
+  $('#aHowL').textContent=SA?'Tu selección':'Cómo pedir';
+  $('#aHow').innerHTML=SA?'Tocá <b>+</b> en una foto y elegí para qué es: '+SA.secs.map(x=>'<b>'+esc(x.name)+'</b> (hasta '+x.max+')').join(', ')+'. La misma foto puede ir en varias. Cuando termines, mandá tu lista por WhatsApp.':'Mirá las fotos, tocá <b>+</b> en las que querés y abajo armás tu pedido. Cada foto tiene su número para que el fotógrafo sepa cuál es.';
+  $('#secBar').classList.toggle('hide',!SA);
+  if(SA)$('#secBar').innerHTML=SA.secs.map((x,i)=>'<span class="secchip tab-num'+(S.ssel[i].size>=x.max?' full':'')+'">'+esc(x.name)+' '+S.ssel[i].size+'/'+x.max+'</span>').join('');
   const g=$('#grid');g.classList.toggle('wide',S.wide);g.classList.toggle('just',!S.wide);g.innerHTML='';
-  S.visible.forEach((p,i)=>{const on=S.sel.has(p.k);const d=document.createElement('div');d.className='ph'+(S.wide?' land':'')+(on?' on':'');if(!S.wide)d.style.setProperty('--r',(p.w/p.h).toFixed(4));
+  S.visible.forEach((p,i)=>{const on=SA?inSel(p.k):S.sel.has(p.k);const d=document.createElement('div');d.className='ph'+(S.wide?' land':'')+(on?' on':'');if(!S.wide)d.style.setProperty('--r',(p.w/p.h).toFixed(4));
     d.innerHTML='<img loading="lazy" decoding="async" alt="">'+(S.wide?'<span class="kid"></span>':'<span class="num tab-num"></span>')+'<button class="open" aria-label="Ver grande"></button><button class="pick" aria-label="Elegir"></button>';
     d.querySelector('img').src=p.th;if(S.wide)d.querySelector('.kid').textContent=p.label;else d.querySelector('.num').textContent=p.num;
-    d.querySelector('.pick').textContent=on?'✓':'+';d.querySelector('.open').onclick=()=>openViewer(i);d.querySelector('.pick').onclick=()=>toggle(p);g.appendChild(d);});
+    d.querySelector('.pick').textContent=on?'✓':'+';d.querySelector('.open').onclick=()=>openViewer(i);d.querySelector('.pick').onclick=()=>SA?chooseSec(p):toggle(p);
+    if(SA&&on){const t=document.createElement('div');t.className='tags';t.innerHTML=SA.secs.map((x,j)=>S.ssel[j].has(p.k)?'<i>'+esc(x.name)+'</i>':'').join('');d.appendChild(t);}
+    g.appendChild(d);});
   if(!S.wide){const f=document.createElement('i');f.className='fill';f.setAttribute('aria-hidden','true');g.appendChild(f);}
   updateCart();
+}
+const inSel=k=>!!S.ssel&&S.ssel.some(st=>st.has(k));
+const selUnion=()=>{const u=[];S.items.forEach(p=>{if(inSel(p.k))u.push(p);});return u;};
+function chooseSec(p){
+  const SA=S.secAct;
+  let h='<h2>Foto '+esc(p.num)+'</h2><p class="sub">¿Para qué la querés? Podés marcar más de una.</p><img class="secthumb" alt="">';
+  SA.secs.forEach((x,i)=>{const on=S.ssel[i].has(p.k),full=!on&&S.ssel[i].size>=x.max;h+='<button type="button" class="secopt'+(on?' on':'')+'" data-i="'+i+'"'+(full?' disabled':'')+'><i class="bx">'+(on?'✓':'')+'</i>'+esc(x.name)+'<span>'+(full?'completo · ':'')+S.ssel[i].size+' de '+x.max+'</span></button>';});
+  h+='<button type="button" class="btn navyb" id="secOk" style="width:100%;margin-top:16px">Listo</button>';
+  $('#sheetBox').innerHTML=h;$('#sheetBox .secthumb').src=p.prev||p.th;sheet.classList.add('show');
+  $('#sheetBox').querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{const st=S.ssel[+b.dataset.i];if(st.has(p.k))st.delete(p.k);else if(st.size<SA.secs[+b.dataset.i].max)st.add(p.k);chooseSec(p);renderGrid();if($('#viewer').classList.contains('show'))syncPick();});
+  $('#secOk').onclick=()=>sheet.classList.remove('show');
 }
 function toggle(p){if(S.sel.has(p.k))S.sel.delete(p.k);else S.sel.set(p.k,p.pay);renderGrid();if($('#viewer').classList.contains('show'))syncPick();}
 
@@ -861,6 +926,9 @@ function extrasTotal(){return S.ext.reduce((t,e,i)=>t+(S.extras[i]||0)*e.price,0
 const selOf=t=>[...S.sel.values()].filter(v=>v.type===t);
 function updateCart(){
   const n=S.sel.size,bar=$('#cartbar'),onPub=!$('#pub').classList.contains('hide')&&!$('#vAct').classList.contains('hide');
+  if(S.secAct&&onPub){const u=selUnion().length;bar.classList.toggle('show',u>0);$('#cbGo').textContent='Enviar mi selección';if(!u)return;
+    $('#cbCount').textContent=u+(u===1?' foto elegida':' fotos elegidas');$('#cbTotal').textContent=S.secAct.secs.map((x,i)=>x.name+' '+S.ssel[i].size+'/'+x.max).join(' · ');return;}
+  $('#cbGo').textContent='Armar pedido';
   bar.classList.toggle('show',onPub&&n>0);if(!n)return;
   const nf=selOf('foto').length,nr=selOf('rec').length,c=bestDigital(nf).cost+nr*S.recPrice;
   const parts=[];if(nf)parts.push(nf+(nf===1?' foto':' fotos'));if(nr)parts.push(nr+(nr===1?' recuerdo':' recuerdos'));
@@ -874,19 +942,19 @@ function openViewer(i){S.vi=i;paintViewer();$('#viewer').classList.add('show');d
 function fitFrame(){const p=S.visible&&S.visible[S.vi];if(!p)return;const st=$('#frame').parentElement,cs=getComputedStyle(st),aw=st.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight),ah=st.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom),k=Math.min(aw/p.w,ah/p.h);const f=$('#frame');f.style.width=Math.max(1,Math.floor(p.w*k))+'px';f.style.height=Math.max(1,Math.floor(p.h*k))+'px';}
 window.addEventListener('resize',()=>{if($('#viewer').classList.contains('show'))fitFrame();});
 function paintViewer(){const p=S.visible[S.vi];requestAnimationFrame(fitFrame);$('#vBlur').src=p.prev;$('#vSharp').src=p.prev;$('#vIdx').textContent=(S.vi+1)+' / '+S.visible.length;syncPick();}
-function syncPick(){const p=S.visible[S.vi],on=S.sel.has(p.k),b=$('#vPick');b.textContent=on?'✓ Elegido':(S.wide?'Elegir este recuerdo':'Elegir esta foto');b.classList.toggle('sel',on);}
+function syncPick(){const p=S.visible[S.vi],on=S.secAct?inSel(p.k):S.sel.has(p.k),b=$('#vPick');b.textContent=S.secAct?(on?'✓ En tu selección · cambiar':'Agregar a mi selección'):(on?'✓ Elegido':(S.wide?'Elegir este recuerdo':'Elegir esta foto'));b.classList.toggle('sel',on);}
 function closeViewer(){$('#viewer').classList.remove('show');document.body.style.overflow='';}
 $('#vClose').onclick=closeViewer;
 $('#vPrev').onclick=()=>{S.vi=(S.vi-1+S.visible.length)%S.visible.length;paintViewer();};
 $('#vNext').onclick=()=>{S.vi=(S.vi+1)%S.visible.length;paintViewer();};
-$('#vPick').onclick=()=>toggle(S.visible[S.vi]);
+$('#vPick').onclick=()=>S.secAct?chooseSec(S.visible[S.vi]):toggle(S.visible[S.vi]);
 document.addEventListener('keydown',e=>{if(!$('#viewer').classList.contains('show'))return;if(e.key==='Escape')closeViewer();if(e.key==='ArrowLeft')$('#vPrev').click();if(e.key==='ArrowRight')$('#vNext').click();});
 let tx=null;const st=$('#frame').parentElement;st.addEventListener('touchstart',e=>{tx=e.touches[0].clientX},{passive:true});st.addEventListener('touchend',e=>{if(tx===null)return;const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>50)(dx<0?$('#vNext'):$('#vPrev')).click();tx=null;});
 
 /* pedido */
 const sheet=$('#sheet');sheet.addEventListener('click',e=>{if(e.target===sheet)sheet.classList.remove('show');});
 const form={kid:'',grade:'',adult:'',wa:''};
-$('#cbGo').onclick=()=>renderOrder();
+$('#cbGo').onclick=()=>S.secAct?renderSelSend():renderOrder();
 function printUnits(){const u=[];S.ext.forEach((e,i)=>{for(let k=0;k<(S.extras[i]||0);k++)u.push({i,k,name:e.name,key:i+'-'+k});});return u;}
 function renderOrder(){
   const T=TYPES[S.pubSchool.type],fotos=selOf('foto'),nf=fotos.length,recs=selOf('rec'),dg=bestDigital(nf),ext=extrasTotal(),total=dg.cost+recs.length*S.recPrice+ext;
@@ -915,6 +983,33 @@ function renderOrder(){
   $('#oBack').onclick=()=>sheet.classList.remove('show');
   if($('#cpAlias'))$('#cpAlias').onclick=async()=>{try{await navigator.clipboard.writeText(S.alias);toast('Alias copiado');}catch(e){toast('Alias: '+S.alias);}};
   $('#of').onsubmit=e=>{e.preventDefault();sendOrder(total,dg);};
+}
+function renderSelSend(){
+  const SA=S.secAct,byK=new Map(S.items.map(p=>[p.k,p]));
+  let h='<h2>Tu selección</h2><p class="sub">'+esc(S.pubSchool.name)+' · '+esc(albumName(SA))+'</p><div class="seclist">';
+  let falta=false;
+  SA.secs.forEach((x,i)=>{const codes=[...S.ssel[i]].map(k=>byK.get(k).num).sort();if(codes.length<x.max)falta=true;
+    h+='<div class="sl"><b><span>'+esc(x.name)+'</span><span class="tab-num">'+codes.length+' de '+x.max+'</span></b><small class="tab-num">'+(codes.length?codes.join(', '):'Todavía sin elegir')+'</small></div>';});
+  h+='</div>';if(falta)h+='<p class="note">Te faltan algunas, pero podés mandarla igual y completarla después.</p>';
+  h+='<form id="sf"><div class="field"><label for="sName">Tu nombre</label><input id="sName" required placeholder="Nombre y apellido"></div><div class="field"><label for="sWa">Tu WhatsApp (opcional)</label><input id="sWa" inputmode="tel" placeholder="Para que te respondan"></div>';
+  h+='<button class="btn wa" type="submit">Enviar mi selección por WhatsApp</button><button class="btn ghost" type="button" id="sBack2" style="width:100%;margin-top:8px">Seguir eligiendo</button></form>';
+  $('#sheetBox').innerHTML=h;sheet.classList.add('show');$('#sName').value=form.adult||'';$('#sWa').value=form.wa||'';
+  $('#sName').oninput=e=>{form.adult=e.target.value;};$('#sWa').oninput=e=>{form.wa=e.target.value;};
+  $('#sBack2').onclick=()=>sheet.classList.remove('show');
+  $('#sf').onsubmit=e=>{e.preventDefault();sendSel();};
+}
+function sendSel(){
+  const SA=S.secAct,byK=new Map(S.items.map(p=>[p.k,p])),id='S-'+(++orderN);
+  const secs=SA.secs.map((x,i)=>({name:x.name,max:x.max,idx:[...S.ssel[i]].map(k=>parseInt(byK.get(k).num.slice(1),10)).sort((a,b)=>a-b)}));
+  let m='Hola! Te paso mi selección de fotos ('+id+'):\n\n'+S.pubSchool.name+' · '+albumName(SA)+'\nNombre: '+form.adult+'\n\n';
+  secs.forEach(x=>{m+='• '+x.name+' ('+x.idx.length+' de '+x.max+'): '+(x.idx.length?x.idx.map(code3).join(', '):'todavía no elegí')+'\n';});
+  const all=[...new Set(secs.flatMap(x=>x.idx))].sort((a,b)=>a-b);
+  S.orders.unshift({id,kind:'sel',date:'hoy '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',hour12:false}),page:S.pubSchool,kid:form.adult,grade:'',adult:form.adult,wa:form.wa,items:all.map(n=>({act:SA,idx:n})),secs,prints:[],total:0,status:'seleccion',lab:false});
+  const phone=S.wa.replace(/\D/g,'');const url='https://wa.me/'+(phone.startsWith('54')?phone:'549'+phone)+'?text='+encodeURIComponent(m);
+  $('#sheetBox').innerHTML='<h2>Tu selección está lista</h2><p class="sub">Tocá el botón y se abre WhatsApp con tu lista ya escrita para '+esc(S.studio)+'.</p><div class="msg"></div><a class="btn wa" target="_blank" rel="noopener"></a><button class="btn ghost" id="cpMsg" style="width:100%;margin-top:8px">Copiar mensaje</button><button class="btn ghost" id="done" style="width:100%;margin-top:8px">Listo</button><p class="note">Demo: esta selección ya aparece en el panel del fotógrafo, en la pestaña Pedidos.</p>';
+  $('#sheetBox .msg').textContent=m;const a=$('#sheetBox a');a.href=url;a.textContent='Abrir WhatsApp';
+  $('#cpMsg').onclick=async()=>{try{await navigator.clipboard.writeText(m);toast('Mensaje copiado');}catch(e){toast('No se pudo copiar');}};
+  $('#done').onclick=()=>{sheet.classList.remove('show');S.ssel=SA.secs.map(()=>new Set());renderGrid();};
 }
 let orderN=1044;
 function sendOrder(total,dg){
@@ -948,13 +1043,13 @@ function cleanThumb(act,idx,max){act._clean=act._clean||{};const k=idx+':'+max;i
 const albumName=a=>a.title+(a.turno?' · '+a.turno:'');
 const fileName=(o,p)=>(o.kid||'pedido').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'')+'_'+o.id+'_'+code3(p.idx)+'.jpg';
 const sizeOf=name=>(name.match(/\d+×\d+/)||['otro'])[0].replace('×','x');
-const ST={nuevo:['Por cobrar','b-warn'],pagado:['Pagado','b-ok'],entregado:['Entregado','b-arch']};
+const ST={nuevo:['Por cobrar','b-warn'],pagado:['Pagado','b-ok'],entregado:['Entregado','b-arch'],seleccion:['Selección de fotos','b-ok']};
 function updateBadge(){const n=S.orders.filter(o=>o.status==='nuevo').length;$('#pcount').textContent=n||'';}
 function thOf(act,idx){ensurePhotos(act);const p=act.photos.find(x=>x.id===idx);return p?p.th:'';}
 function labQueue(){return S.orders.filter(o=>o.status!=='nuevo'&&!o.lab&&o.prints.length);}
 function renderOrders(){
   updateBadge();
-  const F=[['todos','Todos'],['nuevo','Por cobrar'],['pagado','Pagados'],['entregado','Entregados']],fb=$('#oFilters');fb.innerHTML='';
+  const F=[['todos','Todos'],['nuevo','Por cobrar'],['pagado','Pagados'],['entregado','Entregados']].concat(S.orders.some(o=>o.kind==='sel')?[['seleccion','Selecciones']]:[]),fb=$('#oFilters');fb.innerHTML='';
   F.forEach(([k,l])=>{const n=k==='todos'?S.orders.length:S.orders.filter(o=>o.status===k).length;const b=document.createElement('button');b.textContent=l+' · '+n;b.className='tab-num';b.setAttribute('aria-pressed',S.ofilter===k);b.onclick=()=>{S.ofilter=k;renderOrders();};fb.appendChild(b);});
   $('#labCard').classList.add('hide');
   const box=$('#orderList');box.innerHTML='';
@@ -962,6 +1057,13 @@ function renderOrders(){
   if(!list.length)box.innerHTML='<div class="order"><p class="s" style="color:var(--pmuted)">No hay pedidos en esta lista.</p></div>';
   list.forEach(o=>{
     const d=document.createElement('div');d.className='order';const st=ST[o.status];
+    if(o.kind==='sel'){const a=o.items.length?o.items[0].act:null;
+      let h='<div class="ohead"><div><b></b><small></small><small></small></div><div class="oright"><span class="badge '+st[1]+'">'+st[0]+'</span></div></div>';
+      o.secs.forEach(x=>{h+='<div class="osec"><b class="tab-num">'+esc(x.name)+' · '+x.idx.length+' de '+x.max+'</b>'+(x.idx.length?'<div class="othumbs">'+x.idx.map(n=>'<figure><img alt="" src="'+thOf(a,n)+'"><figcaption class="tab-num">'+code3(n)+'</figcaption></figure>').join('')+'</div><p class="ofiles tab-num">Originales: '+x.idx.map(n=>esc(fileOf(a,n))).join(' · ')+'</p>':'<p class="ofiles">Todavía sin elegir.</p>')+'</div>';});
+      h+='<div class="obtns"><button class="btn gold" data-a="cp">Copiar lista con nombres de archivo</button></div>';d.innerHTML=h;
+      const sm=d.querySelectorAll('.ohead small');d.querySelector('.ohead b').textContent=o.id+' · '+(o.kid||'Sin nombre');sm[0].textContent=o.page.name;sm[1].textContent=(a?albumName(a):'')+' · '+o.date;
+      d.querySelector('[data-a=cp]').onclick=async()=>{const t=o.secs.map(x=>x.name+' ('+x.idx.length+' de '+x.max+'):\n'+(x.idx.length?x.idx.map(n=>fileOf(a,n)).join('\n'):'—')).join('\n\n');try{await navigator.clipboard.writeText(t);toast('Lista copiada');}catch(e){toast('No se pudo copiar');}};
+      box.appendChild(d);return;}
     const acts=[...new Set(o.items.map(i=>i.act))];
     let h='<div class="ohead"><div><b></b><small></small><small></small></div><div class="oright"><span class="ototal tab-num">'+fmt(o.total)+'</span><span class="badge '+st[1]+'">'+st[0]+'</span>'+'</div></div>';
     h+='<div class="othumbs">'+o.items.map(i=>'<figure><img alt="" src="'+thOf(i.act,i.idx)+'"><figcaption class="tab-num">'+code3(i.idx)+'</figcaption></figure>').join('')+'</div>';
@@ -1030,6 +1132,10 @@ $('#moAdd').onclick=()=>{
     mk('P-1043','ayer 21:15',p1,'Thiago Fernández','Categoría 2017','Diego','11 4444 8765',[[a2,4],[a2,9],[a2,11],[a2,15],[a2,16]],[['Foto impresa 15×21',a2,9],['Cuadro 20×30 con marco',a2,4]],'pagado'),
     mk('P-1042','ayer 18:03',p0,'Valentina Ríos','4.º grado A · turno mañana','Romina','11 3333 2211',[[a1,2],[a1,7]],[['Foto impresa 20×30',a1,7]],'pagado'),
     mk('P-1041','12 nov',p2,'Catalina Gómez','Grupo de los sábados','Paula','11 2222 9090',[[a3,5]],[],'entregado')];
+  const xv=S.schools.find(s=>s.type==='evento'&&s.name==='XV de Martina'),bk=xv.acts[0];
+  S.orders.splice(1,0,{id:'S-1040',kind:'sel',date:'hoy 09:15',page:xv,kid:'Martina',grade:'',adult:'Martina',wa:'11 6666 4321',
+    secs:[{name:'Gigantografía',max:3,idx:[2,7,15]},{name:'Numeración de mesas',max:2,idx:[4]},{name:'Libro de firmas',max:20,idx:[1,2,3,5,6,8,9,11,12,14,17,19]}],
+    items:[1,2,3,4,5,6,7,8,9,11,12,14,15,17,19].map(n=>({act:bk,idx:n})),prints:[],total:0,status:'seleccion',lab:false});
   orderN=1044;
 })();
 updateBadge();
