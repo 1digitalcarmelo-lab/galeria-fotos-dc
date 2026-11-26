@@ -135,6 +135,14 @@ input,select{font:inherit;color:inherit}
 .prod .f-name{grid-column:1/-1}
 .prod .del{height:46px;border-radius:8px;background:#EEF1F5;font-size:20px}
 .note{font-size:14px;color:var(--pmuted);margin-top:10px}
+.meter{margin-top:14px;max-width:440px}.meter small{font-size:14px;opacity:.9}.meter .mbar{height:8px;background:rgba(255,255,255,.18);border-radius:4px;overflow:hidden;margin-top:6px}.meter .mbar i{display:block;height:100%;background:var(--gold)}
+.actrow .when{display:block;font-size:13px;color:var(--pmuted);margin-top:2px}
+.actbtns{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.actbtns .btn{padding:7px 12px;font-size:13px}
+.linkbtn{background:none;border:0;color:var(--pmuted);text-decoration:underline;font:inherit;font-size:13px;cursor:pointer;padding:4px}
+.alert{background:#FFF8E8;border:1px solid #F1D79A;border-radius:12px;padding:12px 14px;margin-top:14px;font-size:15px;color:#5A4200}
+.ofiles{font-size:13px;color:var(--pmuted);margin-top:8px;word-break:break-all}
+.reactbox{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+@media(max-width:600px){.actrow{grid-template-columns:56px 1fr}.actrow img{width:56px;height:44px}.actrow .actbtns{grid-column:1/-1;justify-content:flex-start}}
 .toast{visibility:hidden;position:fixed;left:50%;bottom:24px;transform:translate(-50%,140%);background:var(--navy);color:#fff;padding:12px 18px;border-radius:10px;font-weight:700;z-index:90;transition:transform 260ms var(--ease-out);max-width:92vw}
 .toast.show{transform:translate(-50%,0);visibility:visible}
 
@@ -310,7 +318,8 @@ input,select{font:inherit;color:inherit}
 
   <!-- Colegios -->
   <main class="pmain" id="tColegios">
-    <div class="hero"><div><h1 id="heroHi">Hola, Estudio Aurora</h1><p id="heroTxt"></p></div><button class="btn gold" id="heroGo">Ver pedidos</button></div>
+    <div class="hero"><div><h1 id="heroHi">Hola, Estudio Aurora</h1><p id="heroTxt"></p><div class="meter" id="meter"></div></div><button class="btn gold" id="heroGo">Ver pedidos</button></div>
+    <div id="gAlert"></div>
     <h2 class="sech">Tus páginas</h2>
     <p class="lead">Una página por colegio, club, parroquia o evento, cada una con su link para compartir.</p>
     <ol class="steps">
@@ -337,21 +346,23 @@ input,select{font:inherit;color:inherit}
     <h1 id="sTitle" style="margin-top:16px"></h1>
     <p class="slink" id="sLink"></p>
     <div id="sBadge"></div>
+    <div id="sAlert"></div>
     <div class="rowbtns" style="justify-content:flex-start;margin-top:12px">
       <button class="btn gold" id="sPublish">Publicar cambios</button>
       <button class="btn soft" id="sView">Ver página publicada</button>
     </div>
     <div class="pcard">
       <h2>Sumar un álbum</h2>
-      <p class="s">Elegí la carpeta con las fotos ya editadas. La app arma sola las vistas previas con marca de agua para la página y sube aparte los originales, guardados en privado, para que despaches los pedidos desde acá.</p>
+      <p class="s">Elegí la carpeta entera con las fotos ya editadas (500, 1.000, las que sean). La app las achica y les pone tu marca de agua en tu compu, antes de subirlas: los originales nunca salen de tu compu.</p>
       <div class="field"><label for="naTitle" id="naTitleL">Nombre del álbum</label><input id="naTitle" value="Acto del Día de la Tradición"></div>
       <div class="grid2">
         <div class="field"><label for="naTurno" id="naTurnoL">Detalle (opcional)</label><input id="naTurno" value="Turno tarde"></div>
         <div class="field"><label for="naYear">Año</label><input id="naYear" value="2026" class="tab-num"></div>
       </div>
-      <label class="check"><input type="checkbox" id="naOrig" checked><span><b>Subir también los originales</b><br>Se achican al tamaño justo para imprimir un 20×30 y quedan 30 días para despachar pedidos. Después se borran: guardá siempre tu copia.</span></label>
+      <p class="note">Cada álbum queda online <b>60 días</b> y lo podés extender. Las fotos se numeran en el orden de tus archivos, así encontrás el original fácil cuando llega un pedido.</p>
       <label class="drop" for="naFiles"><div><b>Elegir las fotos del álbum</b><br><span>JPG o PNG · podés elegir la carpeta entera</span></div></label>
       <input type="file" id="naFiles" accept="image/*" multiple class="hide">
+      <div class="reactbox"><button class="btn soft" id="reBtn" type="button">Reactivar un muestrario guardado</button><input type="file" id="reFile" accept=".dcmuestra" class="hide"><p class="note">¿Una familia te pide fotos de un álbum que ya venció? Elegí su archivo <b>.dcmuestra</b> y vuelve a estar online 60 días, con la misma numeración y el mismo link.</p></div>
       <div class="prog" id="prog"><i></i></div>
       <p class="note" id="progTxt"></p>
       <p class="note">Las familias tienen 30 días para pedir; después el álbum pasa al archivo y se sigue viendo.</p>
@@ -475,11 +486,20 @@ const S={wmLevel:'media',
   studio:'Estudio Aurora',logo:null,color:'#1E5B4F',bg:'#F4F6F8',wm:'VISTA PREVIA',wa:'11 2345 6789',alias:'estudio.aurora.fotos',cobro:'alias',
   dig:[{name:'Foto digital suelta',qty:1,price:3500},{name:'Pack 5 fotos digitales',qty:5,price:14000}],
   ext:[{name:'Foto impresa 15×21',price:4500},{name:'Foto impresa 20×30',price:7500},{name:'Cuadro 20×30 con marco',price:18000}],
-  recPrice:18000,
+  recPrice:18000,limit:5000,
   schools:[],orders:[],ofilter:'todos',printPick:{},cur:null,pubSchool:null,act:null,filter:'',sel:new Map(),extras:{},vi:0,visible:[]
 };
 let uid=1;const nid=()=>'x'+(uid++);
-function mkAct(title,turno,year,date,count,seed,archived){return{id:nid(),title,turno,year,date,count,seed,archived:!!archived,raw:null,photos:null,custom:false}}
+const DAY=864e5,ONLINE_DAYS=60,EXT_DAYS=30,WARN_DAYS=7;
+// left = días que le quedan online (negativo: ya venció y se borró del servidor).
+function mkAct(title,turno,year,date,count,seed,left){return{id:nid(),title,turno,year,date,count,seed,until:Date.now()+(left??ONLINE_DAYS)*DAY,raw:null,photos:null,custom:false,files:null}}
+const daysLeft=a=>Math.ceil((a.until-Date.now())/DAY);
+const isOnline=a=>daysLeft(a)>0;
+const nFotos=a=>a.restored?a.photos.length:(a.custom?a.raw.length:a.count);
+const fotosOnline=()=>S.schools.reduce((t,s)=>t+s.acts.filter(isOnline).reduce((u,a)=>u+nFotos(a),0),0);
+const fdate=ms=>new Date(ms).toLocaleDateString('es-AR',{day:'numeric',month:'short'});
+const fileOf=(a,i)=>(a.files&&a.files[i-1])||('DSC_'+String(4000+a.seed+i).padStart(4,'0')+'.jpg');
+const nfmt=n=>n.toLocaleString('es-AR');
 const TYPES={
   escolar:{label:'Colegio',album:'Acto del Día de la Tradición',det:'Turno o grado (opcional)',detV:'Turno tarde',hero:'Elegí el acto, mirá las fotos y armá tu pedido.',who:'Nombre del alumno',whoM:'Alumno',g:'Grado, sala o curso y turno',gPh:'Ej: 4.º grado B · turno mañana',gReq:true,foot:'Fotografía escolar'},
   deporte:{label:'Club o deporte',album:'Torneo de verano · fecha 4',det:'Categoría (opcional)',detV:'Categoría 2017',hero:'Elegí el partido, mirá las fotos y armá tu pedido.',who:'Nombre del jugador',whoM:'Jugador',g:'Categoría o equipo',gPh:'Ej: Categoría 2017',gReq:false,foot:'Fotografía deportiva'},
@@ -487,15 +507,15 @@ const TYPES={
   evento:{label:'Evento',album:'Fiesta de fin de año',det:'Detalle (opcional)',detV:'',hero:'Elegí el álbum, mirá las fotos y armá tu pedido.',who:'Nombre de quien sale en las fotos',whoM:'Nombre',g:'Detalle (opcional)',gPh:'Ej: Mesa 4',gReq:false,foot:'Fotografía de eventos'}};
 S.schools=[
   {id:nid(),type:'escolar',name:'Escuela N.º 3 José de San Martín',loc:'Moreno',acts:[
-    mkAct('Acto 25 de Mayo','Turno mañana','2026','23 de mayo',20,100),
-    mkAct('Promesa a la Bandera','4.º grado','2026','20 de junio',16,300),
-    mkAct('Acto 25 de Mayo','Turno mañana','2025','23 de mayo de 2025',12,700,true)]},
+    mkAct('Acto 25 de Mayo','Turno mañana','2026','23 de mayo',20,100,41),
+    mkAct('Promesa a la Bandera','4.º grado','2026','20 de junio',16,300,5),
+    mkAct('Acto 25 de Mayo','Turno mañana','2025','23 de mayo de 2025',12,700,-230)]},
   {id:nid(),type:'deporte',name:'Club Social Paso del Rey · Baby fútbol',loc:'Paso del Rey',acts:[
-    mkAct('Torneo de verano · fecha 3','Categoría 2017','2026','15 de noviembre',18,900)]},
+    mkAct('Torneo de verano · fecha 3','Categoría 2017','2026','15 de noviembre',18,900,52)]},
   {id:nid(),type:'comunion',name:'Parroquia San José · Comuniones',loc:'Moreno',acts:[
-    mkAct('Primera comunión','Grupo de los sábados','2026','8 de noviembre',14,1100)]},
+    mkAct('Primera comunión','Grupo de los sábados','2026','8 de noviembre',14,1100,46)]},
   {id:nid(),type:'escolar',name:'Colegio Nuestra Señora del Valle',loc:'Paso del Rey',acts:[
-    mkAct('Muestra de arte','Nivel inicial','2026','14 de noviembre',14,500)]}
+    mkAct('Muestra de arte','Nivel inicial','2026','14 de noviembre',14,500,50)]}
 ];
 const mkCurso=(name,turno,year,teacher,kids,seed)=>({id:nid(),name,turno,year,teacher,kids,seed,cache:null});
 S.schools.forEach(s=>s.cursos=[]);
@@ -550,9 +570,9 @@ function thumb(src,maxSide){
   return c.toDataURL('image/jpeg',.7);
 }
 function ensureRaw(a){if(!a.raw){a.raw=[];for(let i=0;i<a.count;i++)a.raw.push(makeSample(a.seed+i,i%5===2));}}
-function ensurePhotos(a){ensureRaw(a);if(!a.photos)a.photos=a.raw.map((p,i)=>({id:i+1,names:p.names,w:p.canvas.width,h:p.canvas.height,prev:watermark(p.canvas,1100),th:thumb(p.canvas,420)}));}
-function cover(a){if(a._cov)return a._cov;if(a.custom){a._cov=thumb(a.raw[0].canvas,300);}else{a._cov=thumb(makeSample(a.seed+1,true).canvas,300);}return a._cov;}
-function resetImages(){S.schools.forEach(s=>{s.acts.forEach(a=>{a.photos=null;a._cov=null;});(s.cursos||[]).forEach(c=>{if(c.cache)c.cache.items=null;c._cov=null;});});}
+function ensurePhotos(a){if(a.photos)return;ensureRaw(a);a.photos=a.raw.map((p,i)=>({id:i+1,names:p.names,w:p.canvas.width,h:p.canvas.height,prev:watermark(p.canvas,1100),th:thumb(p.canvas,420)}));}
+function cover(a){if(a._cov)return a._cov;if(a.restored){a._cov=a.photos[0].th;}else if(a.custom){a._cov=thumb(a.raw[0].canvas,300);}else{a._cov=thumb(makeSample(a.seed+1,true).canvas,300);}return a._cov;}
+function resetImages(){S.schools.forEach(s=>{s.acts.forEach(a=>{if(a.restored)return;a.photos=null;a._cov=null;});(s.cursos||[]).forEach(c=>{if(c.cache)c.cache.items=null;c._cov=null;});});}
 
 /* ---------- PANEL ---------- */
 $('#asFamily').onclick=async()=>{try{await document.fonts.load('700 40px "Kalam"');}catch(_){}$('#login').classList.add('hide');openPublic(S.schools[0]);};
@@ -570,6 +590,9 @@ $('#heroGo').onclick=()=>tab('pedidos');
 function renderSchools(){
   const np=S.schools.filter(s=>s.published.length).length,nc=S.orders.filter(o=>o.status==='nuevo').length;
   $('#heroHi').textContent='Hola, '+S.studio;$('#heroTxt').innerHTML='Tenés <strong>'+np+(np===1?' página publicada':' páginas publicadas')+'</strong> y <strong>'+nc+(nc===1?' pedido':' pedidos')+' por cobrar</strong>.';
+  const on=fotosOnline();$('#meter').innerHTML='<small class="tab-num">Fotos online: <b>'+nfmt(on)+'</b> de '+nfmt(S.limit)+'</small><div class="mbar"><i style="width:'+Math.min(100,on/S.limit*100)+'%"></i></div>';
+  const soon=[];S.schools.forEach(s=>s.acts.forEach(a=>{const l=daysLeft(a);if(l>0&&l<=WARN_DAYS)soon.push([s,a,l]);}));
+  $('#gAlert').innerHTML=soon.map(([s,a,l])=>'<div class="alert">⏳ <b>'+esc(a.title)+'</b> ('+esc(s.name)+') vence en '+l+(l===1?' día':' días')+'. Entrá a la página para extenderlo o descargar su archivo.</div>').join('');
   const box=$('#schoolList');box.innerHTML='';
   S.schools.forEach(s=>{
     const d=document.createElement('div');d.className='pcard schoolrow';
@@ -589,13 +612,22 @@ function renderSchool(){
   const box=$('#actList');box.innerHTML='';
   if(!s.acts.length)box.innerHTML='<p class="s" style="color:var(--pmuted)">Todavía no hay álbumes. Sumá el primero abajo.</p>';
   s.acts.forEach(a=>{const r=document.createElement('div');r.className='actrow';
-    const pub=s.published.includes(a.id);
-    r.innerHTML='<img alt="" width="72" height="56"><div><b></b><small class="tab-num"></small></div><span class="badge"></span>';
-    r.querySelector('img').src=cover(a);r.querySelector('b').textContent=a.title+(a.turno?' · '+a.turno:'');
-    r.querySelector('small').textContent=a.year+' · '+(a.custom?a.raw.length:a.count)+' fotos';
+    const pub=s.published.includes(a.id),left=daysLeft(a),on=left>0;
+    r.innerHTML='<img alt="" width="72" height="56"><div><b></b><small class="tab-num"></small> <span class="badge"></span><span class="when tab-num"></span></div><div class="actbtns"></div>';
+    const im=r.querySelector('img');im.src=cover(a);if(!on)im.style.opacity=.45;r.querySelector('b').textContent=a.title+(a.turno?' · '+a.turno:'');
+    r.querySelector('small').textContent=a.year+' · '+nfmt(nFotos(a))+' fotos';
     const bd=r.querySelector('.badge');bd.style.marginTop=0;
-    if(a.archived){bd.textContent='Archivo';bd.classList.add('b-arch');}else if(pub){bd.textContent='Publicado';bd.classList.add('b-ok');}else{bd.textContent='Sin publicar';bd.classList.add('b-warn');}
+    if(!on){bd.textContent='Fuera de línea';bd.classList.add('b-arch');}else if(left<=WARN_DAYS){bd.textContent='Vence en '+left+(left===1?' día':' días');bd.classList.add('b-warn');}else if(pub){bd.textContent='Publicado';bd.classList.add('b-ok');}else{bd.textContent='Sin publicar';bd.classList.add('b-warn');}
+    r.querySelector('.when').textContent=on?'Online hasta el '+fdate(a.until)+' · quedan '+left+' días':'Se borró del servidor el '+fdate(a.until)+'. Si guardaste su archivo, reactivalo.';
+    const bx=r.querySelector('.actbtns'),btn=(t,cls,f)=>{const b=document.createElement('button');b.className=cls;b.type='button';b.textContent=t;b.onclick=f;bx.appendChild(b);};
+    if(on){
+      if(left<=15)btn('Extender '+EXT_DAYS+' días','btn gold',()=>{a.until=Math.max(a.until,Date.now())+EXT_DAYS*DAY;renderSchool();toast('Listo: queda online hasta el '+fdate(a.until)+'.');});
+      btn('Descargar archivo','btn soft',()=>exportArchive(s,a));
+      btn('Simular vencimiento (demo)','linkbtn',()=>{a.until=Date.now()-DAY;renderSchool();toast('Demo: el álbum venció y salió de la página. Reactivalo con su archivo.');});
+    }else btn('Reactivar con el archivo','btn gold',()=>{reTarget=a.id;$('#reFile').click();});
     box.appendChild(r);});
+  const soon=s.acts.filter(a=>{const l=daysLeft(a);return l>0&&l<=WARN_DAYS;});
+  $('#sAlert').innerHTML=soon.map(a=>'<div class="alert">⏳ <b>'+esc(a.title)+'</b> vence el '+fdate(a.until)+'. Extendelo 30 días si todavía vendés, o descargá su archivo para reactivarlo cuando quieras. Al vencer se borra solo del servidor.</div>').join('');
   const cb=$('#cursoList');cb.innerHTML='';
   if(!s.cursos.length)cb.innerHTML='<p class="s" style="color:var(--pmuted)">Todavía no hay cursos cargados.</p>';
   s.cursos.forEach(c=>{const r=document.createElement('div');r.className='actrow';r.style.gridTemplateColumns='1fr auto';
@@ -611,19 +643,50 @@ $('#addCurso').onclick=()=>{const d=CURSOS[cursoN%CURSOS.length];cursoN++;S.cur.
 $('#sPublish').onclick=()=>{S.cur.published=S.cur.acts.map(a=>a.id);S.cur.pubC=S.cur.cursos.map(c=>c.id);renderSchool();toast('Publicado. La página ya está actualizada.');};
 $('#sView').onclick=()=>openPublic(S.cur);
 $('#naFiles').onchange=async e=>{
-  const files=[...e.target.files].filter(f=>f.type.startsWith('image/'));if(!files.length)return;
-  const prog=$('#prog'),bar=prog.querySelector('i');prog.style.display='block';const raw=[];
+  const files=[...e.target.files].filter(f=>f.type.startsWith('image/')).sort((x,y)=>x.name.localeCompare(y.name,undefined,{numeric:true}));if(!files.length)return;
+  const on=fotosOnline();
+  if(on+files.length>S.limit){$('#progTxt').textContent='Con este álbum pasarías el límite de '+nfmt(S.limit)+' fotos online (ya tenés '+nfmt(on)+'). Cuando venza algún álbum se libera lugar, o escribinos para ampliar tu plan.';e.target.value='';return;}
+  const prog=$('#prog'),bar=prog.querySelector('i');prog.style.display='block';const raw=[],names=[];
   for(let i=0;i<files.length;i++){
-    $('#progTxt').textContent='Preparando foto '+(i+1)+' de '+files.length+'…';
+    $('#progTxt').textContent='Achicando y poniendo tu marca de agua: foto '+(i+1)+' de '+files.length+'…';
     const img=await new Promise(res=>{const im=new Image();im.onload=()=>res(im);im.onerror=()=>res(null);im.src=URL.createObjectURL(files[i]);});
-    if(img){const c=document.createElement('canvas');const k=Math.min(1,1600/Math.max(img.naturalWidth,img.naturalHeight));c.width=Math.round(img.naturalWidth*k);c.height=Math.round(img.naturalHeight*k);c.getContext('2d').drawImage(img,0,0,c.width,c.height);raw.push({canvas:c,names:[],land:c.width>c.height});}
+    if(img){const c=document.createElement('canvas');const k=Math.min(1,1600/Math.max(img.naturalWidth,img.naturalHeight));c.width=Math.round(img.naturalWidth*k);c.height=Math.round(img.naturalHeight*k);c.getContext('2d').drawImage(img,0,0,c.width,c.height);raw.push({canvas:c,names:[],land:c.width>c.height});names.push(files[i].name);}
     bar.style.width=((i+1)/files.length*100)+'%';await new Promise(r=>setTimeout(r,10));
   }
   if(!raw.length){$('#progTxt').textContent='No pudimos leer esas fotos.';return;}
   const a=mkAct($('#naTitle').value||'Álbum',$('#naTurno').value,$('#naYear').value||'2026',new Date().toLocaleDateString('es-AR',{day:'numeric',month:'long'}),raw.length,0);
-  a.raw=raw;a.custom=true;S.cur.acts.unshift(a);e.target.value='';
-  $('#progTxt').textContent='Listo: '+raw.length+' vistas previas con marca de agua'+($('#naOrig').checked?' y '+raw.length+' originales guardados en privado':'')+'. Tocá "Publicar cambios" para que aparezca en la página.';
+  a.raw=raw;a.files=names;a.custom=true;S.cur.acts.unshift(a);e.target.value='';
+  $('#progTxt').textContent='Listo: '+nfmt(raw.length)+' fotos achicadas y con tu marca de agua. Quedan online hasta el '+fdate(a.until)+'. Tocá "Publicar cambios" para que aparezcan en la página.';
   renderSchool();
+};
+
+/* archivo del muestrario (.dcmuestra): fotos ya achicadas y con marca de agua + datos del álbum */
+let reTarget=null;
+function exportArchive(s,a){
+  ensurePhotos(a);
+  const data={tipo:'muestrario-dc',v:1,estudio:S.studio,pagina:{name:s.name,type:s.type,link:linkOf(s)},
+    album:{id:a.id,title:a.title,turno:a.turno,year:a.year,date:a.date},
+    fotos:a.photos.map(p=>({n:p.id,archivo:fileOf(a,p.id),w:p.w,h:p.h,prev:p.prev,th:p.th}))};
+  const blob=new Blob([JSON.stringify(data)],{type:'application/octet-stream'}),el=document.createElement('a');
+  el.href=URL.createObjectURL(blob);el.download=slug(s.name)+'-'+slug(a.title)+'-'+a.year+'.dcmuestra';
+  document.body.appendChild(el);el.click();el.remove();setTimeout(()=>URL.revokeObjectURL(el.href),5000);
+  toast('Archivo descargado. Guardalo en tu compu o en tu Drive.');
+}
+$('#reBtn').onclick=()=>{reTarget=null;$('#reFile').click();};
+$('#reFile').onchange=async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f)return;
+  let d=null;try{d=JSON.parse(await f.text());}catch(_){}
+  if(!d||d.tipo!=='muestrario-dc'||!Array.isArray(d.fotos)||!d.fotos.length||!d.album){toast('Ese archivo no es un muestrario de la app.');return;}
+  const s=S.cur,n=d.fotos.length;
+  const prev=s.acts.find(x=>x.id===(reTarget||d.album.id))||s.acts.find(x=>!isOnline(x)&&x.title===d.album.title&&x.year===d.album.year);
+  const libera=prev&&isOnline(prev)?nFotos(prev):0;
+  if(fotosOnline()-libera+n>S.limit){toast('Con este álbum pasarías el límite de '+nfmt(S.limit)+' fotos online.');return;}
+  const a=prev||mkAct(d.album.title,d.album.turno,d.album.year,d.album.date,n,0);
+  Object.assign(a,{restored:true,custom:true,raw:null,_cov:null,_clean:null,count:n,files:d.fotos.map(p=>p.archivo),
+    photos:d.fotos.map(p=>({id:p.n,names:[],w:p.w,h:p.h,prev:p.prev,th:p.th})),until:Date.now()+ONLINE_DAYS*DAY});
+  if(!prev)s.acts.unshift(a);
+  renderSchool();
+  toast(s.published.includes(a.id)?'Muestrario reactivado: ya está de nuevo en tu página hasta el '+fdate(a.until)+'.':'Muestrario reactivado hasta el '+fdate(a.until)+'. Tocá "Publicar cambios".');
 };
 
 /* productos */
@@ -749,11 +812,11 @@ function renderPubActs(){
       g.appendChild(listCard(c._cov,'Recuerdo escolar · '+c.name,c.turno+' · '+c.year+' · '+c.kids.length+' alumnos',()=>openCurso(c),true));});
     return;
   }
-  const acts=s.acts.filter(a=>s.published.includes(a.id));
+  const acts=s.acts.filter(a=>s.published.includes(a.id)&&isOnline(a));
   if(!acts.length){box.innerHTML='<p style="color:var(--muted);padding:16px 0 3rem">Pronto vas a encontrar acá las fotos.</p>';return;}
   const years=[...new Set(acts.map(a=>a.year))].sort().reverse();
   years.forEach(y=>{const h=document.createElement('div');h.className='yearh tab-num';h.textContent=y;box.appendChild(h);const g=document.createElement('div');g.className='acts';box.appendChild(g);
-    acts.filter(a=>a.year===y).forEach(a=>g.appendChild(listCard(cover(a),a.title+(a.turno?' · '+a.turno:''),a.date+' · '+(a.custom?a.raw.length:a.count)+' fotos'+(a.archived?' · Archivo':''),()=>openAct(a))));});
+    acts.filter(a=>a.year===y).forEach(a=>g.appendChild(listCard(cover(a),a.title+(a.turno?' · '+a.turno:''),a.date+' · '+nfmt(nFotos(a))+' fotos',()=>openAct(a))));});
 }
 function openAlbum(items,title,meta,archived,wide){
   S.items=items;S.wide=wide;S.filter='';
@@ -763,7 +826,7 @@ function openAlbum(items,title,meta,archived,wide){
 function openAct(a){
   ensurePhotos(a);
   const items=a.photos.map(p=>{const code='#'+String(p.id).padStart(3,'0');return{k:a.id+':'+p.id,names:p.names,num:code,w:p.w,h:p.h,prev:p.prev,th:p.th,pay:{type:'foto',act:a,code}};});
-  openAlbum(items,a.title+(a.turno?' · '+a.turno:''),S.pubSchool.name+' · '+a.date,a.archived,false);
+  openAlbum(items,a.title+(a.turno?' · '+a.turno:''),S.pubSchool.name+' · '+a.date,false,false);
 }
 function openCurso(c){openAlbum(cursoItems(S.pubSchool,c),'Recuerdo escolar · '+c.name,S.pubSchool.name+' · '+c.turno+' · '+c.year,false,true);}
 $('#aBack').onclick=()=>{showPub('#vSchool');renderPubActs();};
@@ -877,22 +940,22 @@ const fileName=(o,p)=>(o.kid||'pedido').normalize('NFD').replace(/[̀-ͯ]/g,'').
 const sizeOf=name=>(name.match(/\d+×\d+/)||['otro'])[0].replace('×','x');
 const ST={nuevo:['Por cobrar','b-warn'],pagado:['Pagado','b-ok'],entregado:['Entregado','b-arch']};
 function updateBadge(){const n=S.orders.filter(o=>o.status==='nuevo').length;$('#pcount').textContent=n||'';}
+function thOf(act,idx){ensurePhotos(act);const p=act.photos.find(x=>x.id===idx);return p?p.th:'';}
 function labQueue(){return S.orders.filter(o=>o.status!=='nuevo'&&!o.lab&&o.prints.length);}
 function renderOrders(){
   updateBadge();
   const F=[['todos','Todos'],['nuevo','Por cobrar'],['pagado','Pagados'],['entregado','Entregados']],fb=$('#oFilters');fb.innerHTML='';
   F.forEach(([k,l])=>{const n=k==='todos'?S.orders.length:S.orders.filter(o=>o.status===k).length;const b=document.createElement('button');b.textContent=l+' · '+n;b.className='tab-num';b.setAttribute('aria-pressed',S.ofilter===k);b.onclick=()=>{S.ofilter=k;renderOrders();};fb.appendChild(b);});
-  const q=labQueue(),np=q.reduce((t,o)=>t+o.prints.length,0),lc=$('#labCard');
-  lc.innerHTML='<h2>Para el laboratorio</h2><p class="s">'+(np?np+(np===1?' impresión':' impresiones')+' de '+q.length+(q.length===1?' pedido pagado':' pedidos pagados')+' sin mandar. Se arman separadas por tamaño y con el nombre de cada uno.':'No hay impresiones pendientes. Cuando marques pedidos como pagados, las impresiones se juntan acá.')+'</p>'+(np?'<button class="btn gold" id="labGo">Armar envío al laboratorio</button>':'');
-  if(np)$('#labGo').onclick=openLab;
+  $('#labCard').classList.add('hide');
   const box=$('#orderList');box.innerHTML='';
   const list=S.orders.filter(o=>S.ofilter==='todos'||o.status===S.ofilter);
   if(!list.length)box.innerHTML='<div class="order"><p class="s" style="color:var(--pmuted)">No hay pedidos en esta lista.</p></div>';
   list.forEach(o=>{
     const d=document.createElement('div');d.className='order';const st=ST[o.status];
     const acts=[...new Set(o.items.map(i=>i.act))];
-    let h='<div class="ohead"><div><b></b><small></small><small></small></div><div class="oright"><span class="ototal tab-num">'+fmt(o.total)+'</span><span class="badge '+st[1]+'">'+st[0]+'</span>'+(o.lab?' <span class="badge b-arch">En el laboratorio</span>':'')+'</div></div>';
-    h+='<div class="othumbs">'+o.items.map(i=>'<figure><img alt="" src="'+cleanThumb(i.act,i.idx,220)+'"><figcaption class="tab-num">'+code3(i.idx)+'</figcaption></figure>').join('')+'</div>';
+    let h='<div class="ohead"><div><b></b><small></small><small></small></div><div class="oright"><span class="ototal tab-num">'+fmt(o.total)+'</span><span class="badge '+st[1]+'">'+st[0]+'</span>'+'</div></div>';
+    h+='<div class="othumbs">'+o.items.map(i=>'<figure><img alt="" src="'+thOf(i.act,i.idx)+'"><figcaption class="tab-num">'+code3(i.idx)+'</figcaption></figure>').join('')+'</div>';
+    h+='<p class="ofiles tab-num">Originales en tu compu: '+o.items.map(i=>esc(fileOf(i.act,i.idx))).join(' · ')+'</p>';
     if(o.prints.length)h+='<p class="oprints tab-num">Para imprimir: '+o.prints.map(p=>esc(p.name)+' ('+code3(p.idx)+')').join(' · ')+'</p>';
     h+='<div class="obtns">';
     if(o.status==='nuevo')h+='<button class="btn gold" data-a="paid">Marcar como pagado</button>';
@@ -904,30 +967,25 @@ function renderOrders(){
     sm[0].textContent=o.page.name+(o.grade?' · '+o.grade:'');
     sm[1].textContent=acts.map(albumName).join(' + ')+' · '+o.date+(o.manual?' · cargado a mano':'');
     const on=(a,f)=>{const b=d.querySelector('[data-a='+a+']');if(b)b.onclick=f;};
-    on('paid',()=>{o.status='pagado';renderOrders();toast(o.id+' pagado.'+(o.prints.length?' Sus impresiones ya están en "Para el laboratorio".':''));});
+    on('paid',()=>{o.status='pagado';renderOrders();toast(o.id+' pagado.');});
     on('done',()=>{o.status='entregado';renderOrders();});
     on('send',()=>openSend(o));
     box.appendChild(d);});
   const sel=$('#moAlbum');if(!sel.options.length){S.schools.forEach((s,si)=>s.acts.forEach(a=>{const op=document.createElement('option');op.value=si+'|'+a.id;op.textContent=s.name+' · '+albumName(a);sel.appendChild(op);}));}
 }
 function openSend(o){
-  const link='https://fotos.digitalcarmelo.com/d/'+o.id.toLowerCase()+'-'+Math.random().toString(36).slice(2,6);
-  const acts=[...new Set(o.items.map(i=>i.act))];
-  const m='Hola'+(o.adult?' '+o.adult.split(' ')[0]:'')+'! Te paso '+(o.items.length===1?'la foto':'las '+o.items.length+' fotos')+' de '+(o.kid||'tu pedido')+' ('+acts.map(albumName).join(' + ')+'), en alta calidad y sin marca de agua. Las descargás acá durante 7 días:\n'+link+'\n\n¡Gracias! '+S.studio;
+  const acts=[...new Set(o.items.map(i=>i.act))],files=o.items.map(i=>fileOf(i.act,i.idx));
+  const m='Hola'+(o.adult?' '+o.adult.split(' ')[0]:'')+'! Te paso '+(o.items.length===1?'la foto':'las '+o.items.length+' fotos')+' de '+(o.kid||'tu pedido')+' ('+acts.map(albumName).join(' + ')+'), en alta calidad y sin marca de agua 📸\n\n¡Gracias! '+S.studio;
   const phone=(o.wa||'').replace(/\D/g,'');
-  let h='<h2>Mandar a '+esc(o.kid||'la familia')+'</h2><p class="sub">'+o.items.length+(o.items.length===1?' foto':' fotos')+' en alta calidad, sin marca de agua.</p>';
-  h+='<div class="othumbs">'+o.items.map(i=>'<figure><img alt="" src="'+cleanThumb(i.act,i.idx,220)+'"><figcaption class="tab-num">'+code3(i.idx)+'</figcaption></figure>').join('')+'</div><div class="msg"></div>';
+  let h='<h2>Mandar a '+esc(o.kid||'la familia')+'</h2><p class="sub">Adjuntá estos originales desde tu compu o tu celu:</p>';
+  h+='<div class="othumbs">'+o.items.map(i=>'<figure><img alt="" src="'+thOf(i.act,i.idx)+'"><figcaption class="tab-num">'+code3(i.idx)+'</figcaption></figure>').join('')+'</div>';
+  h+=files.map(f=>'<div class="labfile">'+esc(f)+'</div>').join('')+'<button class="btn ghost" id="sFiles" style="width:100%;margin-top:8px">Copiar nombres de archivo</button><div class="msg"></div>';
   h+=phone?'<a class="btn wa" target="_blank" rel="noopener" id="sWa">Abrir el WhatsApp de la familia</a>':'<p class="note">Este pedido no tiene WhatsApp cargado: copiá el mensaje y pegalo en el chat.</p>';
-  h+='<button class="btn ghost" id="sShare" style="width:100%;margin-top:8px">Compartir las fotos desde el celu</button>';
-  h+='<button class="btn ghost" id="sDl" style="width:100%;margin-top:8px">Descargar las fotos</button>';
   h+='<button class="btn ghost" id="sCp" style="width:100%;margin-top:8px">Copiar mensaje</button>';
   if(o.status!=='entregado')h+='<button class="btn navyb" id="sDone" style="width:100%;margin-top:8px">Listo, marcar entregado</button>';
-  h+='<p class="note">Demo: el link de descarga es de ejemplo. En la app real abre una página con las fotos para bajar.</p>';
   $('#sheetBox').innerHTML=h;$('#sheetBox .msg').textContent=m;sheet.classList.add('show');
   if(phone)$('#sWa').href='https://wa.me/'+(phone.startsWith('54')?phone:'549'+phone)+'?text='+encodeURIComponent(m);
-  const blobs=()=>Promise.all(o.items.map(i=>new Promise(res=>origCanvas(i.act,i.idx).toBlob(b=>res(new File([b],fileName(o,i),{type:'image/jpeg'})),'image/jpeg',.92))));
-  $('#sShare').onclick=async()=>{try{const files=await blobs();if(navigator.canShare&&navigator.canShare({files})){await navigator.share({files,text:m});}else toast('Desde la compu usá el link o descargá las fotos.');}catch(e){}};
-  $('#sDl').onclick=async()=>{const files=await blobs();for(const f of files){const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.name;document.body.appendChild(a);a.click();a.remove();await new Promise(r=>setTimeout(r,300));}};
+  $('#sFiles').onclick=async()=>{try{await navigator.clipboard.writeText(files.join('\n'));toast('Nombres copiados');}catch(e){toast('No se pudo copiar');}};
   $('#sCp').onclick=async()=>{try{await navigator.clipboard.writeText(m);toast('Mensaje copiado');}catch(e){toast('No se pudo copiar');}};
   if($('#sDone'))$('#sDone').onclick=()=>{o.status='entregado';sheet.classList.remove('show');renderOrders();toast(o.id+' entregado.');};
 }
@@ -948,7 +1006,7 @@ function openLab(){
   $('#lDone').onclick=()=>{q.forEach(o=>o.lab=true);sheet.classList.remove('show');renderOrders();toast('Listo: quedaron marcados como enviados al laboratorio.');};
 }
 $('#moAdd').onclick=()=>{
-  const [si,aid]=$('#moAlbum').value.split('|'),pg=S.schools[+si],a=pg.acts.find(x=>x.id===aid),max=a.custom?a.raw.length:a.count;
+  const [si,aid]=$('#moAlbum').value.split('|'),pg=S.schools[+si],a=pg.acts.find(x=>x.id===aid),max=nFotos(a);
   const nums=[...new Set(($('#moCodes').value.match(/\d+/g)||[]).map(Number).filter(n=>n>=1&&n<=max))];
   if(!nums.length){toast('Poné números de foto entre 1 y '+max+'.');$('#moCodes').focus();return;}
   const o={id:'P-'+(++orderN),date:'hoy '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',hour12:false}),page:pg,kid:$('#moName').value.trim(),grade:'',adult:'',wa:$('#moWa').value.trim(),items:nums.map(n=>({act:a,idx:n})),prints:[],status:'nuevo',lab:false,manual:true};
