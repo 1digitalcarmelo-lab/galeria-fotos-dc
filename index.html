@@ -246,8 +246,13 @@ input,select{font:inherit;color:inherit}
 .grid.wide{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
 @media (max-width:480px){.grid.wide{grid-template-columns:1fr}}
 .ph.land{aspect-ratio:3/2}
-.ph.hz{grid-column:span 2;aspect-ratio:3/2}
-.grid.wide .ph.hz{grid-column:auto}
+/* Filas justificadas: cada fila se llena con las fotos que entran, en orden y con su forma real */
+.grid.just{display:flex;flex-wrap:wrap;gap:8px;--rowh:220px}
+.grid.just .ph{aspect-ratio:auto;flex-grow:var(--r);flex-basis:calc(var(--rowh) * var(--r));min-width:0}
+.grid.just .ph::before{content:"";display:block;padding-top:calc(100% / var(--r))}
+.grid.just .ph img{position:absolute;inset:0}
+.grid.just .fill{flex-grow:999;flex-basis:0;height:0}
+@media (max-width:480px){.grid.just{gap:6px;--rowh:130px}}
 .ph .kid{position:absolute;left:8px;bottom:8px;background:rgba(19,32,46,.72);color:#fff;font-size:14px;font-weight:800;padding:4px 10px;border-radius:6px}
 .printlist{margin-top:12px;display:grid;gap:4px;font-size:14px;max-height:180px;overflow:auto;background:#EEF1F5;border-radius:8px;padding:10px 12px;font-family:ui-monospace,Menlo,monospace}
 .printimg{width:100%;border-radius:8px;margin-top:12px;display:block}
@@ -836,11 +841,12 @@ function renderGrid(){
   const q=S.filter.trim().toLowerCase();
   S.visible=S.items.filter(p=>!q||p.names.some(n=>n.toLowerCase().includes(q)));
   $('#aCount').textContent=q?(S.visible.length+(S.wide?' recuerdos':' fotos')+' de "'+S.filter+'"'):(S.items.length+(S.wide?' recuerdos · tocá el de tu hijo para verlo grande':' fotos · tocá una para verla grande'));
-  const g=$('#grid');g.classList.toggle('wide',S.wide);g.innerHTML='';
-  S.visible.forEach((p,i)=>{const on=S.sel.has(p.k);const d=document.createElement('div');d.className='ph'+(S.wide?' land':(p.w>p.h*1.1?' hz':''))+(on?' on':'');
+  const g=$('#grid');g.classList.toggle('wide',S.wide);g.classList.toggle('just',!S.wide);g.innerHTML='';
+  S.visible.forEach((p,i)=>{const on=S.sel.has(p.k);const d=document.createElement('div');d.className='ph'+(S.wide?' land':'')+(on?' on':'');if(!S.wide)d.style.setProperty('--r',(p.w/p.h).toFixed(4));
     d.innerHTML='<img loading="lazy" decoding="async" alt="">'+(S.wide?'<span class="kid"></span>':'<span class="num tab-num"></span>')+'<button class="open" aria-label="Ver grande"></button><button class="pick" aria-label="Elegir"></button>';
     d.querySelector('img').src=p.th;if(S.wide)d.querySelector('.kid').textContent=p.label;else d.querySelector('.num').textContent=p.num;
     d.querySelector('.pick').textContent=on?'✓':'+';d.querySelector('.open').onclick=()=>openViewer(i);d.querySelector('.pick').onclick=()=>toggle(p);g.appendChild(d);});
+  if(!S.wide){const f=document.createElement('i');f.className='fill';f.setAttribute('aria-hidden','true');g.appendChild(f);}
   updateCart();
 }
 function toggle(p){if(S.sel.has(p.k))S.sel.delete(p.k);else S.sel.set(p.k,p.pay);renderGrid();if($('#viewer').classList.contains('show'))syncPick();}
