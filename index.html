@@ -127,8 +127,11 @@ input,select{font:inherit;color:inherit}
 /* ===== PÁGINA PÚBLICA ===== */
 #pub{background:var(--bg);color:var(--ink);min-height:100vh}
 #pub ::selection{background:var(--accent);color:#fff}
-.backpill{display:block;width:100%;background:var(--navy);color:#fff;font-size:14px;font-weight:700;padding:10px 16px;text-align:left;min-height:44px}
-.backpill span{color:var(--gold)}
+.backpill{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;width:100%;background:#141B3D;color:#fff;font-size:14px;font-weight:700;padding:8px 16px;font-family:Inter,system-ui,sans-serif}
+.bpbtns{display:flex;gap:8px}.bpgo{min-height:40px;padding:0 14px;border-radius:10px;background:linear-gradient(180deg,#E6BE57,#C99A2E);color:#141B3D;font-weight:800}.bpout{min-height:40px;padding:0 12px;border-radius:10px;border:1px solid rgba(255,255,255,.35);color:#fff}
+.headbtns{display:flex;gap:8px;flex:none}.headbtns .btn{min-height:42px;padding:0 14px;font-size:15px}
+@media (max-width:560px){.headbtns .soft{display:none}.headbtns .btn{padding:0 12px;font-size:14px}}
+.backpill>span{color:#D4A73C}
 .wrap{padding:0 clamp(1rem,3vw,2.5rem);max-width:1400px;margin:0 auto}
 .top{display:flex;align-items:center;gap:12px;padding:18px 0;font-weight:800;font-size:19px}
 .mono{width:42px;height:42px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:800;font-size:16px;overflow:hidden;flex:none}
@@ -289,7 +292,7 @@ input,select{font:inherit;color:inherit}
     <p class="demo-note">Versión de prueba con datos de ejemplo. No se sube ninguna foto a internet.</p>
   </aside>
   <div class="appmain">
-  <header class="apphead"><div class="who"><span class="ini" id="whoIni">EA</span><div><b id="who">Estudio Aurora</b><small id="whoSub">Galería de Fotos · Mis páginas</small></div></div></header>
+  <header class="apphead"><div class="who"><span class="ini" id="whoIni">EA</span><div><b id="who">Estudio Aurora</b><small id="whoSub">Galería de Fotos · Mis páginas</small></div></div><div class="headbtns"><button class="btn gold" id="asFam2">Ver como familia</button><button class="btn soft" id="toLogin">Salir</button></div></header>
 
   <!-- Colegios -->
   <main class="pmain" id="tColegios">
@@ -418,7 +421,7 @@ input,select{font:inherit;color:inherit}
 
 <!-- ============ PÁGINA PÚBLICA ============ -->
 <section id="pub" class="hide">
-  <button class="backpill" id="toPanel"><span>Así lo ve la familia</span> · ← Volver al panel</button>
+  <div class="backpill"><span>Demo · Así lo ve la familia</span><div class="bpbtns"><button class="bpgo" id="toPanel">← Panel del fotógrafo</button><button class="bpout" id="toLogin2">Salir</button></div></div>
   <div class="wrap"><header class="top"><span class="mono" id="pMono"></span><span id="pStudio"></span></header></div>
   <main id="vSchool" class="wrap">
     <section class="phero"><h1 id="pSchool"></h1><p id="pHeroTxt"></p></section>
@@ -540,7 +543,7 @@ function resetImages(){S.schools.forEach(s=>{s.acts.forEach(a=>{a.photos=null;a.
 
 /* ---------- PANEL ---------- */
 $('#asFamily').onclick=async()=>{try{await document.fonts.load('700 40px "Kalam"');}catch(_){}$('#login').classList.add('hide');openPublic(S.schools[0]);};
-$('#loginForm').onsubmit=async e=>{e.preventDefault();try{await document.fonts.load('700 40px "Kalam"');}catch(_){}$('#login').classList.add('hide');$('#panel').classList.remove('hide');tab('colegios');};
+$('#loginForm').onsubmit=async e=>{e.preventDefault();try{await document.fonts.load('700 40px "Kalam"');}catch(_){}$('#login').classList.add('hide');$('#panel').classList.remove('hide');tab(S.curTab||'colegios');};
 const TABS={colegios:'#tColegios',pedidos:'#tPedidos',productos:'#tProductos',marca:'#tMarca',cobro:'#tCobro'};
 function tab(t){document.querySelectorAll('.ptabs button').forEach(b=>b.setAttribute('aria-current',b.dataset.t===t));
   ['#tColegios','#tSchool','#tPedidos','#tProductos','#tMarca','#tCobro'].forEach(id=>$(id).classList.add('hide'));$(TABS[t]).classList.remove('hide');S.curTab=t;
@@ -712,6 +715,10 @@ function openPublic(s){
   $('#panel').classList.add('hide');$('#pub').classList.remove('hide');
   $('#pSchool').textContent=s.name;showPub('#vSchool');renderPubActs();
 }
+
+$('#asFam2').onclick=()=>{$('#panel').classList.add('hide');openPublic(S.cur||S.schools[0]);};
+const toLogin=()=>{closeViewer();sheet.classList.remove('show');$('#pub').classList.add('hide');$('#panel').classList.add('hide');$('#login').classList.remove('hide');window.scrollTo(0,0);};
+$('#toLogin').onclick=toLogin;$('#toLogin2').onclick=toLogin;
 $('#toPanel').onclick=()=>{closeViewer();sheet.classList.remove('show');$('#pub').classList.add('hide');$('#panel').classList.remove('hide');updateCart();if(S.curTab==='pedidos')renderOrders();else if(S.cur)renderSchool();else renderSchools();window.scrollTo(0,0);};
 function showPub(id){['#vSchool','#vAct'].forEach(v=>$(v).classList.toggle('hide',v!==id));window.scrollTo(0,0);updateCart();}
 document.querySelectorAll('#pTabs button').forEach(b=>b.onclick=()=>{S.ptab=b.dataset.s;renderPubActs();});
